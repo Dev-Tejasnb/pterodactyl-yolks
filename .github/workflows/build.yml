@@ -1,0 +1,73 @@
+name: Build & Publish Python Images
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+
+          - version: "2.7"
+            tag: "python_2.7"
+
+          - version: "3.7"
+            tag: "python_3.7"
+
+          - version: "3.8"
+            tag: "python_3.8"
+
+          - version: "3.9"
+            tag: "python_3.9"
+
+          - version: "3.10"
+            tag: "python_3.10"
+
+          - version: "3.11"
+            tag: "python_3.11"
+
+          - version: "3.12"
+            tag: "python_3.12"
+
+          - version: "3.13"
+            tag: "python_3.13"
+
+          - version: "3.14"
+            tag: "python_3.14"
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./${{ matrix.version }}/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/python:${{ matrix.tag }}
